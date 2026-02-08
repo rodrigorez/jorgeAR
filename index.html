@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>3D Scene - Version 2 (AR Integration)</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
@@ -81,8 +81,8 @@
     </header>
 
     <!-- Cena A-Frame com configuração AR.js -->
-    <a-scene embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    <a-scene
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; trackingMethod: best; sourceWidth:1280; sourceHeight:720; displayWidth:1280; displayHeight:720;"
         vr-mode-ui="enabled: false" renderer="antialias: true; colorManagement: true; alpha: true;">
 
         <!-- Iluminação: Essencial para o Modo Debug (objetos não ficarem pretos) -->
@@ -233,6 +233,9 @@
 
         window.addEventListener('arjs-video-loaded', function () {
             document.querySelector('.arjs-loader').style.display = 'none';
+            // Forçar redimensionamento múltiplo para garantir alinhamento no celular
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 500);
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 2000);
         });
 
         /**
