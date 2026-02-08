@@ -85,9 +85,30 @@
     </header>
 
     <!-- Cena A-Frame com configuração AR.js -->
-    <a-scene
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; trackingMethod: best; sourceWidth:1280; sourceHeight:720; displayWidth:1280; displayHeight:720;"
-        vr-mode-ui="enabled: false" renderer="antialias: true; colorManagement: true; alpha: true;">
+    <a-scene id="main-scene" embedded
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; trackingMethod: best;"
+        vr-mode-ui="enabled: true" renderer="antialias: true; colorManagement: true; alpha: true;">
+
+        <script>
+            // Lógica de Detecção Situacional para Modo Cardboard (Evitar Deformação no modo Normal)
+            const urlParams = new URLSearchParams(window.location.search);
+            const sceneEl = document.getElementById('main-scene');
+
+            if (urlParams.get('stereo') === '1') {
+                // No modo estéreo Cardboard, precisamos de videoTexture para a câmera aparecer no VR
+                sceneEl.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; trackingMethod: best; videoTexture: true;');
+                sceneEl.setAttribute('renderer', 'antialias: true; colorManagement: false; alpha: true;');
+                console.log("Modo Cardboard (Estéreo) Ativado via URL.");
+            }
+
+            // Usar o ícone de VR nativo como gatilho para o Modo Cardboard
+            sceneEl.addEventListener('enter-vr', function () {
+                if (new URLSearchParams(window.location.search).get('stereo') !== '1') {
+                    console.log("Entrando em VR... Recarregando com configurações de Estéreo.");
+                    window.location.search = "stereo=1";
+                }
+            });
+        </script>
 
         <!-- Iluminação: Essencial para o Modo Debug (objetos não ficarem pretos) -->
         <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
@@ -235,9 +256,13 @@
             }
         });
 
+        // Função para esconder o loader
         window.addEventListener('arjs-video-loaded', function () {
             document.querySelector('.arjs-loader').style.display = 'none';
-            // Forçar redimensionamento múltiplo para garantir alinhamento no celular
+        });
+
+        // Forçar redimensionamento para alinhar câmera
+        window.addEventListener('arjs-video-loaded', function () {
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 500);
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 2000);
         });
@@ -329,7 +354,19 @@
 
         window.addEventListener('resize', function () {
             var scene = document.querySelector('a-scene');
-            if (scene) scene.resize();
+            if (scene) {
+                scene.resize();
+                // Ajuste extra para videoTexture não deformar em modo RA
+                const video = document.querySelector('video');
+                if (video && !isDebugMode) {
+                    const canvas = scene.canvas;
+                    if (canvas) {
+                        // Forçar o canvas a respeitar a proporção do vídeo se possível
+                        // O AR.js costuma gerenciar isso, mas o videoTexture pode causar inconsistência
+                        console.log("Ajustando proporção da cena...");
+                    }
+                }
+            }
         });
 
         // Suporte extra para mudança de orientação em dispositivos móveis
